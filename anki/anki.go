@@ -40,6 +40,7 @@ type (
 		DeckName  string            `json:"deckName"`
 		ModelName string            `json:"modelName"`
 		Fields    map[string]string `json:"fields"`
+		Tags      []string          `json:"tags"`
 	}
 
 	internalNote struct {
@@ -47,11 +48,16 @@ type (
 	}
 )
 
-func (a *AnkiClient) AddNote(deckName, modelName string, fields map[string]string) (NoteID, error) {
+func (a *AnkiClient) AddNote(
+	deckName, modelName string,
+	fields map[string]string,
+	tags []string,
+) (NoteID, error) {
 	res, err := request[NoteID]("addNote", internalNote{Note{
 		DeckName:  deckName,
 		ModelName: modelName,
 		Fields:    fields,
+		Tags:      tags,
 	}})
 	if err != nil {
 		return 0, err
