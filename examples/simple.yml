@@ -1,0 +1,20 @@
+---
+- deck: English
+  # "type" refers to the Anki note type, such as "Basic", "Cloze", etc.
+  type: Vocab 
+  # global tags applied to all notes in this deck
+  tags:
+  - english::vocab
+  - imported
+  # field mappings: the keys used in [notes] are mapped to field names in the Anki note type
+  # for example, "front" below will populate the "Front" field in Anki
+  fields:
+    front: Front
+    back: Back
+  notes:
+    - front: The word
+      back: The definition
+    - front: Another word
+      back: Another word definition
+      # local tags apply only to this specific note
+      tags: [english::example-tag]
