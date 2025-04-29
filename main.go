@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
 	mdParser "github.com/gomarkdown/markdown/parser"
-
 	"github.com/olexsmir/anpi/anki"
 	"github.com/olexsmir/anpi/parser"
 )
@@ -45,9 +45,12 @@ func run() error {
 			slog.Info("gotten fields", "fields", fields)
 
 			tags := mergeTags(deck.Tags, note.Tags)
-			if _, err := anki.AddNote(deck.Deck, deck.Type, fields, tags); err != nil {
+			nid, err := anki.AddNote(deck.Deck, deck.Type, fields, tags)
+			if err != nil {
 				return err
 			}
+
+			slog.Info("note added", "id", nid, "fields", fields)
 		}
 	}
 
@@ -73,14 +76,15 @@ func mergeTags(global, local []string) []string {
 }
 
 func fromMarkdown(inp string) string {
-	extensions := mdParser.CommonExtensions | mdParser.AutoHeadingIDs | mdParser.NoEmptyLineBeforeBlock
-
 	htmlFlags := html.CommonFlags | html.HrefTargetBlank
 	opts := html.RendererOptions{Flags: htmlFlags}
 
-	p := mdParser.NewWithExtensions(extensions)
+	p := mdParser.New()
 	doc := p.Parse([]byte(inp))
 
-	renderer := html.NewRenderer(opts)
-	return string(markdown.Render(doc, renderer))
+	str := string(markdown.Render(doc, html.NewRenderer(opts)))
+	str = strings.ReplaceAll(str, "<p>", "")
+	str = strings.ReplaceAll(str, "</p>", "")
+
+	return str
 }
