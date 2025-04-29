@@ -33,3 +33,29 @@ func (a *AnkiClient) GetDeckNames() (DeckNames, error) {
 
 	return res.Result, nil
 }
+
+type (
+	NoteID int
+	Note   struct {
+		DeckName  string            `json:"deckName"`
+		ModelName string            `json:"modelName"`
+		Fields    map[string]string `json:"fields"`
+	}
+
+	internalNote struct {
+		Note Note `json:"note"`
+	}
+)
+
+func (a *AnkiClient) AddNote(deckName, modelName string, fields map[string]string) (NoteID, error) {
+	res, err := request[NoteID]("addNote", internalNote{Note{
+		DeckName:  deckName,
+		ModelName: modelName,
+		Fields:    fields,
+	}})
+	if err != nil {
+		return 0, err
+	}
+
+	return res.Result, nil
+}

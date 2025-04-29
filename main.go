@@ -2,31 +2,35 @@ package main
 
 import (
 	"log/slog"
-	"os"
 
 	"github.com/olexsmir/anpi/anki"
-	"github.com/olexsmir/anpi/parser"
 )
 
 func main() {
 	anki := anki.NewAnkiClient()
 
-	decks, err := anki.GetDeckNames()
-	slog.Info("test deck names", "fields", decks, "err", err)
+	nid, err := anki.AddNote("testing", "Basic", map[string]string{
+		"Front": "the thing",
+		"Back":  "asdfasfasdf",
+	})
+	slog.Info("note added", "nid", nid, "err", err)
 
-	fields, err := anki.GetModelFieldNames("Basic")
-	slog.Info("test existent type", "fields", fields, "err", err)
-
-	fieldsErr, err := anki.GetModelFieldNames("chicked jokey")
-	slog.Info("test non-existent type", "fields", fieldsErr, "err", err)
-
-	f, _ := os.ReadFile("test.yml")
-	data, err := parser.Parse(f)
-	slog.Info("parsing data", "err", err)
-
-	lookup := "front"
-	ankiField := data[1].FieldLookUp(lookup)
-	slog.Info("looking up anki note field", "field", ankiField, "lookup", lookup)
+	// decks, err := anki.GetDeckNames()
+	// slog.Info("test deck names", "fields", decks, "err", err)
+	//
+	// fields, err := anki.GetModelFieldNames("Basic")
+	// slog.Info("test existent type", "fields", fields, "err", err)
+	//
+	// fieldsErr, err := anki.GetModelFieldNames("chicked jokey")
+	// slog.Info("test non-existent type", "fields", fieldsErr, "err", err)
+	//
+	// f, _ := os.ReadFile("test.yml")
+	// data, err := parser.Parse(f)
+	// slog.Info("parsing data", "err", err)
+	//
+	// lookup := "front"
+	// ankiField := data[1].FieldLookUp(lookup)
+	// slog.Info("looking up anki note field", "field", ankiField, "lookup", lookup)
 
 	// for _, deck := range data {
 	// 	fmt.Printf("\nDeck: %s\n", deck.Deck)
