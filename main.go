@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log/slog"
 	"os"
 
@@ -25,24 +24,28 @@ func main() {
 	data, err := parser.Parse(f)
 	slog.Info("parsing data", "err", err)
 
-	for _, deck := range data {
-		fmt.Printf("\nDeck: %s\n", deck.Deck)
-		fmt.Printf("Type: %s\n", deck.Type)
-		fmt.Printf("Global Tags: %v\n", deck.Tags)
-		fmt.Println("Fields mapping:")
-		for internalName, anki := range deck.Fields {
-			fmt.Printf("  %s -> %s\n", internalName, anki)
-		}
+	lookup := "front"
+	ankiField := data[1].FieldLookUp(lookup)
+	slog.Info("looking up anki note field", "field", ankiField, "lookup", lookup)
 
-		fmt.Println("Notes:")
-		for _, note := range deck.Notes {
-			fmt.Println("  Note fields:")
-			for internalName, value := range note.Fields {
-				fmt.Printf("    %s: %s\n", internalName, value)
-			}
-			if len(note.Tags) > 0 {
-				fmt.Printf("    Local Tags: %v\n", note.Tags)
-			}
-		}
-	}
+	// for _, deck := range data {
+	// 	fmt.Printf("\nDeck: %s\n", deck.Deck)
+	// 	fmt.Printf("Type: %s\n", deck.Type)
+	// 	fmt.Printf("Global Tags: %v\n", deck.Tags)
+	// 	fmt.Println("Fields mapping:")
+	// 	for internalName, anki := range deck.Fields {
+	// 		fmt.Printf("  %s -> %s\n", internalName, anki)
+	// 	}
+	//
+	// 	fmt.Println("Notes:")
+	// 	for _, note := range deck.Notes {
+	// 		fmt.Println("  Note fields:")
+	// 		for internalName, value := range note.Fields {
+	// 			fmt.Printf("    %s: %s\n", internalName, value)
+	// 		}
+	// 		if len(note.Tags) > 0 {
+	// 			fmt.Printf("    Local Tags: %v\n", note.Tags)
+	// 		}
+	// 	}
+	// }
 }
