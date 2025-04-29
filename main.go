@@ -5,6 +5,10 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/gomarkdown/markdown"
+	"github.com/gomarkdown/markdown/html"
+	mdParser "github.com/gomarkdown/markdown/parser"
+
 	"github.com/olexsmir/anpi/anki"
 	"github.com/olexsmir/anpi/parser"
 )
@@ -31,17 +35,14 @@ func run() error {
 		return err
 	}
 
-	slog.Info("data", "data", data)
-
 	for _, deck := range data {
 		for _, note := range deck.Notes {
 			fields := make(map[string]string)
 			for k, v := range note.Fields {
-				slog.Info("chicken jokey", "k", k, "v", v, "yep", deck.FieldLookUp(k))
-				fields[deck.FieldLookUp(k)] = v
+				fields[deck.FieldLookUp(k)] = fromMarkdown(v)
 			}
 
-			slog.Info("got fields", "fields", fields)
+			slog.Info("gotten fields", "fields", fields)
 
 			tags := mergeTags(deck.Tags, note.Tags)
 			if _, err := anki.AddNote(deck.Deck, deck.Type, fields, tags); err != nil {
@@ -69,4 +70,17 @@ func mergeTags(global, local []string) []string {
 	}
 
 	return result
+}
+
+func fromMarkdown(inp string) string {
+	extensions := mdParser.CommonExtensions | mdParser.AutoHeadingIDs | mdParser.NoEmptyLineBeforeBlock
+
+	htmlFlags := html.CommonFlags | html.HrefTargetBlank
+	opts := html.RendererOptions{Flags: htmlFlags}
+
+	p := mdParser.NewWithExtensions(extensions)
+	doc := p.Parse([]byte(inp))
+
+	renderer := html.NewRenderer(opts)
+	return string(markdown.Render(doc, renderer))
 }
