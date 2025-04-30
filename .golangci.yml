@@ -1,0 +1,145 @@
+version: "2"
+run:
+  concurrency: 8
+  issues-exit-code: 1
+  tests: true
+linters:
+  default: none
+  enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - copyloopvar
+    - cyclop
+    - decorder
+    - dupl
+    - durationcheck
+    - err113
+    - errcheck
+    - errname
+    - errorlint
+    - exhaustive
+    - fatcontext
+    - forbidigo
+    - funlen
+    - gocheckcompilerdirectives
+    - gochecknoglobals
+    - gochecknoinits
+    - gochecksumtype
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - godot
+    - goprintffuncname
+    - gosec
+    - govet
+    - inamedparam
+    - ineffassign
+    - interfacebloat
+    - lll
+    - loggercheck
+    - makezero
+    - mirror
+    - mnd
+    - musttag
+    - nakedret
+    - nestif
+    - nilerr
+    - nilnil
+    - noctx
+    - nolintlint
+    - nonamedreturns
+    - nosprintfhostport
+    - perfsprint
+    - prealloc
+    - predeclared
+    - promlinter
+    - reassign
+    - revive
+    - rowserrcheck
+    - sloglint
+    - staticcheck
+    - tagalign
+    - testableexamples
+    - testifylint
+    - testpackage
+    - thelper
+    - tparallel
+    - unconvert
+    - unparam
+    - unused
+    - usestdlibvars
+    - wastedassign
+    - whitespace
+  settings:
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+    funlen:
+      ignore-comments: true
+    gocognit:
+      min-complexity: 15
+    gocritic:
+      enable-all: true
+    gocyclo:
+      min-complexity: 15
+    govet:
+      enable-all: true
+    interfacebloat:
+      max: 3
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+      allow-unused: false
+    revive:
+      confidence: 0.1
+      rules:
+        - name: exported
+          disabled: true
+    staticcheck:
+      checks:
+        - all
+    testifylint:
+      enable-all: true
+  exclusions:
+    generated: lax
+    rules:
+      - linters:
+          - gocritic
+        source: //noinspection
+      - linters:
+          - dupl
+          - err113
+          - funlen
+          - gochecknoglobals
+          - goconst
+          - gosec
+          - noctx
+          - staticcheck
+        path: _test\.go
+      - path: (.+)\.go$
+        text: Error return value of .((os\.)?std(out|err)\..*|.*Close|.*Flush|os\.Remove(All)?|.*printf?|os\.(Un)?Setenv|.*Rollback). is not checked
+      - path: (.+)\.go$
+        text: should check returned error before deferring
+      - path: (.+)\.go$
+        text: (ST1000|ST1003|ST1020|ST1021)
+    paths:
+      - bin
+      - vendor
+      - third_party$
+      - builtin$
+      - examples$
+issues:
+  max-same-issues: 50
+formatters:
+  enable:
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - bin
+      - vendor
+      - third_party$
+      - builtin$
+      - examples$
