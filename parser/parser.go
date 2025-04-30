@@ -1,7 +1,8 @@
 package parser
 
 import (
-	"fmt"
+	"errors"
+	"maps"
 
 	"gopkg.in/yaml.v3"
 )
@@ -30,9 +31,7 @@ func (d *DeckImport) Validate() error {
 
 func (d *DeckImport) buildLookUpTable() {
 	d.fieldLookUp = make(map[string]string)
-	for k, v := range d.Fields {
-		d.fieldLookUp[k] = v
-	}
+	maps.Copy(d.Fields, d.fieldLookUp)
 }
 
 type Note struct {
@@ -62,6 +61,8 @@ func (n *Note) UnmarshalYAML(value *yaml.Node) error {
 	return nil
 }
 
+var ErrInvalidFileFormat = errors.New("invalid file format")
+
 func Parse(inp []byte) ([]DeckImport, error) {
 	var listRes []DeckImport
 	if err := yaml.Unmarshal(inp, &listRes); err == nil {
@@ -77,5 +78,5 @@ func Parse(inp []byte) ([]DeckImport, error) {
 		return []DeckImport{single}, nil
 	}
 
-	return nil, fmt.Errorf("invalid file format")
+	return nil, ErrInvalidFileFormat
 }

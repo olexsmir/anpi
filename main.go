@@ -29,7 +29,7 @@ func main() {
 }
 
 func run(fpath string) error {
-	anki := anki.NewAnkiClient()
+	ac := anki.NewAnkiClient()
 
 	f, err := os.ReadFile(filepath.Clean(fpath))
 	if err != nil {
@@ -51,7 +51,12 @@ func run(fpath string) error {
 			slog.Info("gotten fields", "fields", fields)
 
 			tags := mergeTags(deck.Tags, note.Tags)
-			nid, err := anki.AddNote(deck.Deck, deck.Type, fields, tags)
+			nid, err := ac.AddNote(anki.Note{
+				DeckName:  deck.Deck,
+				ModelName: deck.Type,
+				Fields:    fields,
+				Tags:      tags,
+			})
 			if err != nil {
 				return err
 			}

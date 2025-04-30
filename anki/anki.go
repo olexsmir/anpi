@@ -48,16 +48,12 @@ type (
 	}
 )
 
-func (a *AnkiClient) AddNote(
-	deckName, modelName string,
-	fields map[string]string,
-	tags []string,
-) (NoteID, error) {
+func (a *AnkiClient) AddNote(inp Note) (NoteID, error) {
 	res, err := request[NoteID]("addNote", internalNote{Note{
-		DeckName:  deckName,
-		ModelName: modelName,
-		Fields:    fields,
-		Tags:      tags,
+		DeckName:  inp.DeckName,
+		ModelName: inp.ModelName,
+		Fields:    inp.Fields,
+		Tags:      inp.Tags,
 	}})
 	if err != nil {
 		return 0, err

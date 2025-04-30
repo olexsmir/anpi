@@ -19,6 +19,7 @@ type AnkiResponse[T any] struct {
 
 func (r AnkiResponse[T]) CheckErrors() error {
 	if r.Error != "" {
+		//nolint:err113 // there's no way to parse those errors so i just return them as they come
 		return fmt.Errorf("%s", r.Error)
 	}
 	return nil
@@ -42,6 +43,7 @@ func request[R any, P any](action string, params P) (AnkiResponse[R], error) {
 		return AnkiResponse[R]{}, err
 	}
 
+	//nolint:noctx // there's no need for time out or anything like that at the moment
 	req, err := http.NewRequest(http.MethodGet, ankiURL, bytes.NewBuffer(bodyReq))
 	if err != nil {
 		return AnkiResponse[R]{}, err
@@ -55,7 +57,7 @@ func request[R any, P any](action string, params P) (AnkiResponse[R], error) {
 		return AnkiResponse[R]{}, err
 	}
 
-	defer resp.Body.Close() //nolint
+	defer resp.Body.Close()
 
 	var ankiResp AnkiResponse[R]
 	if err := json.NewDecoder(resp.Body).Decode(&ankiResp); err != nil {

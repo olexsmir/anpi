@@ -60,7 +60,6 @@ linters:
     - rowserrcheck
     - sloglint
     - staticcheck
-    - tagalign
     - testableexamples
     - testifylint
     - testpackage
@@ -85,6 +84,8 @@ linters:
     gocyclo:
       min-complexity: 15
     govet:
+      disable:
+        - fieldalignment
       enable-all: true
     interfacebloat:
       max: 3
