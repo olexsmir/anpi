@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"strings"
 
+	"github.com/alecthomas/kong"
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
 	mdParser "github.com/gomarkdown/markdown/parser"
@@ -13,19 +15,23 @@ import (
 	"github.com/olexsmir/anpi/parser"
 )
 
-const importFile = "import.yml"
+//nolint:gochecknoglobals // comment to make linter happy
+var cli struct {
+	File string `help:"path to import file" name:"file" type:"path"`
+}
 
 func main() {
-	if err := run(); err != nil {
+	_ = kong.Parse(&cli)
+	if err := run(cli.File); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
 }
 
-func run() error {
+func run(fpath string) error {
 	anki := anki.NewAnkiClient()
 
-	f, err := os.ReadFile(importFile)
+	f, err := os.ReadFile(filepath.Clean(fpath))
 	if err != nil {
 		return err
 	}
