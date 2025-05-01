@@ -2,7 +2,6 @@ package parser
 
 import (
 	"errors"
-	"maps"
 
 	"gopkg.in/yaml.v3"
 )
@@ -13,25 +12,17 @@ type DeckImport struct {
 	Tags   []string          `yaml:"tags"`
 	Fields map[string]string `yaml:"fields"`
 	Notes  []Note            `yaml:"notes"`
-
-	// fieldLookUp internal reserve mapping of [Fields]
-	fieldLookUp map[string]string
 }
 
 func (d *DeckImport) FieldLookUp(field string) string {
 	// TODO: use ok notation here
 
-	val := d.fieldLookUp[field]
+	val := d.Fields[field]
 	return val
 }
 
 func (d *DeckImport) Validate() error {
 	return nil
-}
-
-func (d *DeckImport) buildLookUpTable() {
-	d.fieldLookUp = make(map[string]string)
-	maps.Copy(d.Fields, d.fieldLookUp)
 }
 
 type Note struct {
@@ -66,15 +57,11 @@ var ErrInvalidFileFormat = errors.New("invalid file format")
 func Parse(inp []byte) ([]DeckImport, error) {
 	var listRes []DeckImport
 	if err := yaml.Unmarshal(inp, &listRes); err == nil {
-		for i := range listRes {
-			listRes[i].buildLookUpTable()
-		}
 		return listRes, nil
 	}
 
 	var single DeckImport
 	if err := yaml.Unmarshal(inp, &single); err == nil {
-		single.buildLookUpTable()
 		return []DeckImport{single}, nil
 	}
 
