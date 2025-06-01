@@ -96,6 +96,7 @@ func fromMarkdown(inp string) string {
 	str := string(markdown.Render(doc, html.NewRenderer(opts)))
 	str = strings.ReplaceAll(str, "<p>", "")
 	str = strings.ReplaceAll(str, "</p>", "")
+	str = strings.TrimSuffix(str, "\n")
 
 	return str
 }
