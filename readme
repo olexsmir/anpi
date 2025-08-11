@@ -1,0 +1,7 @@
+anpi
+----
+
+Lookup word definitions from cli.
+
+    anpi <word>
+    anpi <word> --all # will show all definitions and more examples

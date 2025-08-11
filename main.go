@@ -1,102 +1,137 @@
 package main
 
 import (
+	"bufio"
+	"errors"
+	"flag"
 	"fmt"
-	"log/slog"
 	"os"
-	"path/filepath"
 	"strings"
-
-	"github.com/alecthomas/kong"
-	"github.com/gomarkdown/markdown"
-	"github.com/gomarkdown/markdown/html"
-	mdParser "github.com/gomarkdown/markdown/parser"
-	"github.com/olexsmir/anpi/anki"
-	"github.com/olexsmir/anpi/parser"
 )
 
-//nolint:gochecknoglobals // comment to make linter happy
-var cli struct {
-	File string `help:"path to import file" name:"file" type:"path"`
+type Sense struct {
+	Definition string
+	Examples   []string
+}
+
+type POSBlock struct {
+	POS    string
+	IPA    string
+	Senses []Sense
+}
+
+type Entry struct {
+	Word         string
+	RedirectWord string
+	POSBlocks    []POSBlock
+}
+
+func isPiped() bool {
+	fi, _ := os.Stdin.Stat()
+	return (fi.Mode() & os.ModeCharDevice) == 0
+}
+
+func readStdinWord() (string, error) {
+	s := bufio.NewScanner(os.Stdin)
+	if s.Scan() {
+		return strings.TrimSpace(s.Text()), nil
+	}
+	return "", s.Err()
 }
 
 func main() {
-	_ = kong.Parse(&cli)
-	if err := run(cli.File); err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+	all := flag.Bool("all", false, "print all senses to stderr")
+	aFlag := flag.Bool("a", false, "shorthand for --all")
+	pos := flag.String("pos", "", "filter by part of speech")
+	clearCacheFlag := flag.Bool("clear-cache", false, "clear cache for word")
+
+	flag.Parse()
+
+	args := flag.Args()
+
+	var word string
+	switch {
+	case len(args) > 0:
+		word = args[0]
+	case isPiped():
+		var err error
+		word, err = readStdinWord()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "anpi: %v\n", err)
+			os.Exit(1)
+		}
+		if word == "" {
+			fmt.Fprintln(os.Stderr, "usage: anpi [flags] <word>")
+			os.Exit(1)
+		}
+	default:
+		fmt.Fprintln(os.Stderr, "usage: anpi [flags] <word>")
 		os.Exit(1)
 	}
-}
 
-func run(fpath string) error {
-	ac := anki.NewAnkiClient()
-
-	f, err := os.ReadFile(filepath.Clean(fpath))
-	if err != nil {
-		return err
-	}
-
-	data, err := parser.Parse(f)
-	if err != nil {
-		return err
-	}
-
-	for _, deck := range data {
-		for _, note := range deck.Notes {
-			fields := make(map[string]string)
-			for k, v := range note.Fields {
-				fields[deck.FieldLookUp(k)] = fromMarkdown(v)
+	if len(args) > 1 {
+		for _, arg := range args[1:] {
+			if arg == "--all" || arg == "-a" {
+				*all = true
 			}
-
-			slog.Info("gotten fields", "fields", fields)
-
-			tags := mergeTags(deck.Tags, note.Tags)
-			nid, err := ac.AddNote(anki.Note{
-				DeckName:  deck.Deck,
-				ModelName: deck.Type,
-				Fields:    fields,
-				Tags:      tags,
-			})
-			if err != nil {
-				return err
+			if arg == "--clear-cache" {
+				*clearCacheFlag = true
 			}
-
-			slog.Info("note added", "id", nid, "fields", fields)
 		}
 	}
 
-	return nil
-}
-
-func mergeTags(global, local []string) []string {
-	unique := make(map[string]struct{})
-
-	for _, tag := range global {
-		unique[tag] = struct{}{}
-	}
-	for _, tag := range local {
-		unique[tag] = struct{}{}
+	if *all || *aFlag {
+		*all = true
 	}
 
-	result := make([]string, 0, len(unique))
-	for tag := range unique {
-		result = append(result, tag)
+	cache, err := NewCache()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 
-	return result
-}
+	if *clearCacheFlag {
+		_ = cache.Clear(word)
+	}
 
-func fromMarkdown(inp string) string {
-	htmlFlags := html.CommonFlags | html.HrefTargetBlank
-	opts := html.RendererOptions{Flags: htmlFlags}
+	entry, err := cache.Read(word)
+	if errors.Is(err, ErrNotFound) {
+		_, _ = fmt.Fprintf(os.Stderr, "anpi: %v\n", err)
+		os.Exit(1)
+	}
+	if err != nil {
+		dict := NewCambridgeDictionary()
+		entry, err = dict.Lookup(word)
+		if err != nil {
+			if werr := cache.Write(word, nil, false); werr != nil {
+				fmt.Fprintf(os.Stderr, "cache write error: %v\n", werr)
+			}
+			_, _ = fmt.Fprintf(os.Stderr, "anpi: %v\n", err)
+			os.Exit(1)
+		}
+		if err := cache.Write(word, entry, true); err != nil {
+			fmt.Fprintf(os.Stderr, "cache write error: %v\n", err)
+		}
+	}
 
-	p := mdParser.New()
-	doc := p.Parse([]byte(inp))
+	if *pos != "" {
+		var filtered []POSBlock
+		for _, b := range entry.POSBlocks {
+			if strings.EqualFold(b.POS, *pos) {
+				filtered = append(filtered, b)
+			}
+		}
+		if len(filtered) == 0 {
+			_, _ = fmt.Fprintf(os.Stderr, "warning: no %q sense found, showing all\n", *pos)
+		} else {
+			entry.POSBlocks = filtered
+		}
+	}
 
-	str := string(markdown.Render(doc, html.NewRenderer(opts)))
-	str = strings.ReplaceAll(str, "<p>", "")
-	str = strings.ReplaceAll(str, "</p>", "")
-	str = strings.TrimSuffix(str, "\n")
+	if *all {
+		writeAll(entry, os.Stderr)
+		return
+	}
 
-	return str
+	fmt.Print(toTSV(entry))
 }
