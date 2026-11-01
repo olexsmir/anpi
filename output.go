@@ -59,6 +59,7 @@ func writeAll(entry *Entry, w io.Writer) {
 		if pi > 0 {
 			_, _ = fmt.Fprintln(w)
 		}
+		_, _ = fmt.Fprintln(w, entry.Word)
 		_, _ = fmt.Fprintf(w, "[%s] /%s/\n", block.POS, block.IPA)
 		for si, sense := range block.Senses {
 			if si > 0 {
@@ -69,5 +70,6 @@ func writeAll(entry *Entry, w io.Writer) {
 				_, _ = fmt.Fprintf(w, "     - %s\n", ex)
 			}
 		}
+		_, _ = fmt.Fprintln(w, "")
 	}
 }

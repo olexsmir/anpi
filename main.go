@@ -43,6 +43,7 @@ func main() {
 	all := flag.Bool("all", false, "print all senses to stderr")
 	aFlag := flag.Bool("a", false, "shorthand for --all")
 	pos := flag.String("pos", "", "filter by part of speech")
+	ipaFlag := flag.Bool("ipa", false, "print only IPA pronunciation")
 	clearCacheFlag := flag.Bool("clear-cache", false, "clear cache for word")
 
 	flag.Parse()
@@ -74,7 +75,7 @@ func main() {
 			if arg == "--all" || arg == "-a" {
 				*all = true
 			}
-			if arg == "--clear-cache" {
+			if arg == "--clear-cache" || arg == "--ipa" {
 				*clearCacheFlag = true
 			}
 		}
@@ -126,6 +127,15 @@ func main() {
 		} else {
 			entry.POSBlocks = filtered
 		}
+	}
+
+	if *ipaFlag {
+		for _, b := range entry.POSBlocks {
+			if b.IPA != "" {
+				fmt.Printf("/%s/\n", b.IPA)
+			}
+		}
+		return
 	}
 
 	if *all {
